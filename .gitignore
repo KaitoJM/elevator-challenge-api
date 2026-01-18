@@ -1,0 +1,7 @@
+
+# Test database
+test.db
+
+# Node modules (if not already there)
+node_modules/
+coverage/
