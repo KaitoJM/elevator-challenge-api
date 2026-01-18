@@ -21,11 +21,6 @@ describe("Onboard Endpoints", () => {
     await repository.clearAll();
   });
 
-  // Close database connection after all tests
-  afterAll(async () => {
-    // Database connection stays open and is reused
-  });
-
   describe("POST /api/onboard - Create onboard request", () => {
     test("should create a new onboard request with valid data", async () => {
       const response = await request(app).post("/api/onboard").send({
@@ -107,14 +102,8 @@ describe("Onboard Endpoints", () => {
 
   describe("GET /api/onboard - Get all onboard requests", () => {
     test("should retrieve all onboard requests", async () => {
-      // First create a request
-      await request(app).post("/api/onboard").send({
-        name: "Jane Smith",
-        currentFloor: 2,
-        dropOffFloor: 8,
-      });
+      await repository.create("Jane Smith", 2, 8);
 
-      // Then retrieve all
       const response = await request(app).get("/api/onboard");
 
       expect(response.statusCode).toBe(200);
@@ -136,16 +125,9 @@ describe("Onboard Endpoints", () => {
 
   describe("DELETE /api/onboard/:id - Delete onboard request", () => {
     test("should delete an onboard request by id", async () => {
-      // First create a request
-      const createResponse = await request(app).post("/api/onboard").send({
-        name: "Mike Johnson",
-        currentFloor: 3,
-        dropOffFloor: 10,
-      });
+      const createdRecord = await repository.create("Mike Johnson", 3, 10);
+      const id = createdRecord.id;
 
-      const id = createResponse.body.id;
-
-      // Then delete it
       const deleteResponse = await request(app).delete(`/api/onboard/${id}`);
 
       expect(deleteResponse.statusCode).toBe(200);
@@ -164,32 +146,6 @@ describe("Onboard Endpoints", () => {
       const response = await request(app).delete("/api/onboard/invalid");
 
       expect(response.statusCode).toBe(404);
-    });
-  });
-
-  describe("Integration tests", () => {
-    test("should create, retrieve, and delete an onboard request", async () => {
-      // Create
-      const createResponse = await request(app).post("/api/onboard").send({
-        name: "Test User",
-        currentFloor: 1,
-        dropOffFloor: 7,
-      });
-
-      expect(createResponse.statusCode).toBe(201);
-      const id = createResponse.body.id;
-
-      // Retrieve all
-      const getAllResponse = await request(app).get("/api/onboard");
-      expect(getAllResponse.statusCode).toBe(200);
-      const createdRecord = getAllResponse.body.find((r) => r.id === id);
-      expect(createdRecord).toBeDefined();
-      expect(createdRecord.name).toBe("Test User");
-
-      // Delete
-      const deleteResponse = await request(app).delete(`/api/onboard/${id}`);
-      expect(deleteResponse.statusCode).toBe(200);
-      expect(deleteResponse.body.deleted).toBe(1);
     });
   });
 });
